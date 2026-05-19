@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Notas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #151820;
+      --card:      #1c2030;
+      --border:    #2a3045;
+      --accent:    #4fffb0;
+      --accent2:   #3de0ff;
+      --warn:      #ffcd3d;
+      --danger:    #ff5269;
+      --text:      #e8eaf0;
+      --muted:     #6b7494;
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header .badge {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: .25rem .9rem;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    header p {
+      margin-top: .5rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── FORM ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: .4rem; }
+    label {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+    input[type="text"], input[type="number"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: .95rem;
+      padding: .7rem 1rem;
+      transition: border-color .2s;
+      outline: none;
+      width: 100%;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .btn-row { margin-top: 1.2rem; display: flex; gap: .75rem; }
+    button {
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-size: .9rem;
+      border: none;
+      border-radius: 8px;
+      padding: .7rem 1.6rem;
+      transition: opacity .2s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0f14;
+    }
+    .btn-danger {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    button:hover { opacity: .88; }
+
+    /* ── RESULTADO INLINE ── */
+    #resultado {
+      margin-top: 1.25rem;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-size: .9rem;
+      display: none;
+      border-left: 4px solid;
+      background: var(--surface);
+    }
+    #resultado.aprovado  { border-color: var(--accent);  }
+    #resultado.exame     { border-color: var(--warn);    }
+    #resultado.reprovado { border-color: var(--danger);  }
+    #resultado .res-nome { font-weight: 700; font-size: 1rem; margin-bottom: .4rem; }
+    #resultado .res-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .4rem .8rem;
+      margin-top: .4rem;
+    }
+    #resultado .res-item span:first-child { color: var(--muted); font-size: .75rem; display: block; }
+    #resultado .res-item span:last-child  { font-weight: 600; }
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .2rem .75rem;
+      letter-spacing: .05em;
+    }
+    .tag.aprovado  { background: rgba(79,255,176,.15); color: var(--accent); }
+    .tag.exame     { background: rgba(255,205,61,.15);  color: var(--warn); }
+    .tag.reprovado { background: rgba(255,82,105,.15);  color: var(--danger); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    thead tr {
+      border-bottom: 2px solid var(--border);
+    }
+    th {
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      padding: .75rem 1rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.025); }
+    td.nome { font-weight: 600; }
+    td.media { font-family: 'Space Mono', monospace; font-weight: 700; }
+    td.acoes { text-align: right; }
+    .btn-del {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: .2rem .4rem;
+      border-radius: 4px;
+      transition: color .2s;
+    }
+    .btn-del:hover { color: var(--danger); }
+
+    /* empty state */
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 2.5rem 0;
+      font-size: .9rem;
+    }
+    .empty span { display: block; font-size: 2rem; margin-bottom: .5rem; }
+
+    /* ── COUNTER ── */
+    .stats-row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .stat {
+      flex: 1;
+      min-width: 100px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      text-align: center;
+    }
+    .stat .val {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .stat .lbl { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: .15rem; }
+    .stat.ap  .val { color: var(--accent); }
+    .stat.ex  .val { color: var(--warn); }
+    .stat.rp  .val { color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Sistema Escolar</div>
+  <h1>Controle de Notas</h1>
+  <p>Cadastre alunos e acompanhe aprovações em tempo real</p>
+</header>
+
+<div class="container">
+
+  <!-- FORMULÁRIO -->
+  <div class="card">
+    <div class="card-title"> Cadastrar Aluno</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="nome">Nome do Aluno</label>
+        <input type="text" id="nome" placeholder="Ex: Maria Silva" />
+      </div>
+      <div class="field">
+        <label for="nota1">Nota 1º Bimestre</label>
+        <input type="number" id="nota1" min="0" max="10" step="0.1" placeholder="0 – 10" />
+      </div>
+      <div class="field">
+        <label for="nota2">Nota 2º Bimestre</label>
+        <input type="number" id="nota2" min="0" max="10" step="0.1" placeholder="0 – 10" />
+      </div>
+    </div>
+
+    <div id="erro" style="color:var(--danger);font-size:.85rem;margin-top:.75rem;display:none;"></div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="cadastrar()">Adicionar Aluno</button>
+      <button class="btn-danger" onclick="limparTudo()">Limpar Tudo</button>
+    </div>
+
+    <!-- resultado do último cadastro -->
+    <div id="resultado">
+      <div class="res-nome" id="res-nome"></div>
+      <div class="res-grid">
+        <div class="res-item"><span>Nota 1</span><span id="res-n1"></span></div>
+        <div class="res-item"><span>Nota 2</span><span id="res-n2"></span></div>
+        <div class="res-item"><span>Média</span><span id="res-media" style="font-family:'Space Mono',monospace"></span></div>
+        <div class="res-item"><span>Situação</span><span id="res-sit"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="card">
+    <div class="card-title"> Alunos Cadastrados</div>
+
+    <div class="stats-row" id="stats-row" style="display:none !important">
+      <div class="stat ap"><div class="val" id="cnt-ap">0</div><div class="lbl">Aprovados</div></div>
+      <div class="stat ex"><div class="val" id="cnt-ex">0</div><div class="lbl">Exame Final</div></div>
+      <div class="stat rp"><div class="val" id="cnt-rp">0</div><div class="lbl">Reprovados</div></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nome</th>
+            <th>Nota 1</th>
+            <th>Nota 2</th>
+            <th>Média</th>
+            <th>Situação</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">
+      <span></span>Nenhum aluno cadastrado ainda.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'sistema_notas_alunos';
+  let alunos = [];
+
+  /* ── utilitários ── */
+  function calcMedia(n1, n2) {
+    return ((n1 + n2) / 2);
+  }
+  function calcSituacao(media) {
+    if (media >= 6)              return { texto: 'Aprovado',    cls: 'aprovado' };
+    if (media >= 2 && media < 6) return { texto: 'Exame Final', cls: 'exame'    };
+    return                              { texto: 'Reprovado',   cls: 'reprovado' };
+  }
+  function fmt(n) { return n.toFixed(1); }
+
+  /* ── localStorage ── */
+  function salvar()    { localStorage.setItem(STORAGE_KEY, JSON.stringify(alunos)); }
+  function carregar()  {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      alunos = raw ? JSON.parse(raw) : [];
+    } catch { alunos = []; }
+  }
+
+  /* ── cadastrar ── */
+  function cadastrar() {
+    const nome  = document.getElementById('nome').value.trim();
+    const n1    = parseFloat(document.getElementById('nota1').value);
+    const n2    = parseFloat(document.getElementById('nota2').value);
+    const erro  = document.getElementById('erro');
+
+    erro.style.display = 'none';
+
+    if (!nome) { mostrarErro('Informe o nome do aluno.'); return; }
+    if (isNaN(n1) || n1 < 0 || n1 > 10) { mostrarErro('Nota 1 deve ser entre 0 e 10.'); return; }
+    if (isNaN(n2) || n2 < 0 || n2 > 10) { mostrarErro('Nota 2 deve ser entre 0 e 10.'); return; }
+
+    const media    = calcMedia(n1, n2);
+    const situacao = calcSituacao(media);
+    const aluno    = { nome, n1, n2, media, situacao: situacao.texto, cls: situacao.cls };
+
+    alunos.push(aluno);
+    salvar();
+    renderTabela();
+    exibirResultado(aluno);
+    limparForm();
+  }
+
+  function mostrarErro(msg) {
+    const el = document.getElementById('erro');
+    el.textContent = '⚠ ' + msg;
+    el.style.display = 'block';
+  }
+
+  function limparForm() {
+    ['nome','nota1','nota2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('nome').focus();
+  }
+
+  function limparTudo() {
+    if (!alunos.length) return;
+    if (!confirm('Deseja remover TODOS os alunos?')) return;
+    alunos = [];
+    salvar();
+    renderTabela();
+    document.getElementById('resultado').style.display = 'none';
+  }
+
+  function remover(idx) {
+    alunos.splice(idx, 1);
+    salvar();
+    renderTabela();
+  }
+
+  /* ── exibir resultado do último cadastro ── */
+  function exibirResultado(a) {
+    const el = document.getElementById('resultado');
+    el.className = a.cls;
+    el.style.display = 'block';
+    document.getElementById('res-nome').textContent  = a.nome;
+    document.getElementById('res-n1').textContent    = fmt(a.n1);
+    document.getElementById('res-n2').textContent    = fmt(a.n2);
+    document.getElementById('res-media').textContent = fmt(a.media);
+    document.getElementById('res-sit').innerHTML = `<span class="tag ${a.cls}">${a.situacao}</span>`;
+  }
+
+  /* ── tabela ── */
+  function renderTabela() {
+    const tbody = document.getElementById('corpo');
+    const empty = document.getElementById('empty');
+    const statsRow = document.getElementById('stats-row');
+
+    tbody.innerHTML = '';
+
+    if (!alunos.length) {
+      empty.style.display = 'block';
+      statsRow.style.cssText = 'display:none !important';
+      return;
+    }
+
+    empty.style.display = 'none';
+    statsRow.style.cssText = 'display:flex !important';
+
+    let ap = 0, ex = 0, rp = 0;
+
+    alunos.forEach((a, i) => {
+      if (a.cls === 'aprovado')  ap++;
+      if (a.cls === 'exame')     ex++;
+      if (a.cls === 'reprovado') rp++;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--muted);font-family:'Space Mono',monospace;font-size:.8rem">${i+1}</td>
+        <td class="nome">${a.nome}</td>
+        <td>${fmt(a.n1)}</td>
+        <td>${fmt(a.n2)}</td>
+        <td class="media">${fmt(a.media)}</td>
+        <td><span class="tag ${a.cls}">${a.situacao}</span></td>
+        <td class="acoes"><button class="btn-del" onclick="remover(${i})" title="Remover">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('cnt-ap').textContent = ap;
+    document.getElementById('cnt-ex').textContent = ex;
+    document.getElementById('cnt-rp').textContent = rp;
+  }
+
+  /* ── init ── */
+  carregar();
+  renderTabela();
+
+  /* Enter para cadastrar */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') cadastrar();
+  });
+</script>
+</body>
+</html>
