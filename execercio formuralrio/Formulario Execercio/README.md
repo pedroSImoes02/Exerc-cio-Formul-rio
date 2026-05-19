@@ -21,5 +21,6 @@ Acesse: [http://localhost:3000](http://localhost:3000)
 
 - Pedro Henrique Sobral Simeos
 - Natasha Oliveira
+- Danton Fernandes
 
 
